@@ -65,7 +65,8 @@ export async function main(server: HttpServer) {
 	io.on('connection', async (socket) => {
 		socket.on('update_graphic', async (message: UpdateGraphicMessage) => {
 			io.emit(`graphics_updated_${message.graphic}`, message.data);
-			db.data.graphics[message.graphic].variables = message.data;
+			const preexisting_variables = db.data.graphics[message.graphic].variables;
+			db.data.graphics[message.graphic].variables = Object.assign({}, preexisting_variables, message.data);
 			await db.write();
 		});
 	});
