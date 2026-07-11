@@ -5,12 +5,32 @@
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
+	const graphics_variables = data.graphics;
 
 	onMount(async () => {
 		const socket = io();
 		window.addEventListener('message', ({ data }) => {
-			if (data.graphic && data.data) {
-				socket.emit('update_graphic', data);
+			switch (data.msg) {
+				case "update":
+					if (data.graphic && data.variables) {
+						socket.emit('update_graphic', {
+							graphic: data.graphic,
+							variables: data.variables
+						});
+					}
+					break;
+				case "get_variables":
+					{
+						const graphic = data.graphic;
+						if (graphic && graphics_variables[graphic] && graphics_variables[graphic].variables) {
+							window.postMessage({
+								msg: "send_variables",
+								graphic: graphic,
+								variables: graphics_variables[graphic].variables
+							})
+						}
+					}
+					break;
 			}
 		});
 	});
