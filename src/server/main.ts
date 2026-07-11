@@ -27,7 +27,8 @@ const default_data: Data = { graphics: {} };
 const db = await JSONFilePreset('graphix_db.json', default_data);
 const graphics_path = 'graphics';
 
-export function get_graphics() {
+export async function get_graphics() {
+	await db.read();
 	return db.data.graphics;
 }
 

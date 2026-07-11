@@ -3,6 +3,6 @@ import { get_graphics } from '../server/main.ts';
 
 export const load: PageServerLoad = async () => {
 	return {
-		graphics: get_graphics()
+		graphics: await get_graphics()
 	};
 };
