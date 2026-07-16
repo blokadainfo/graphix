@@ -1,9 +1,13 @@
-FROM node:25
+FROM node:26-bookworm-slim
+ENV CI=true
 WORKDIR /app
+RUN mkdir -p /app/graphics
+COPY package.json ./
+COPY pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
+RUN npm install -g pnpm@11
+RUN pnpm i --frozen-lockfile
 COPY . .
-RUN chmod +x ./entrypoint.sh
-RUN mkdir -p graphics
-RUN npm i --frozen-lockfile
-RUN npm run build
+RUN pnpm run build
 EXPOSE 3000
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+CMD ["./build/server.js"]
