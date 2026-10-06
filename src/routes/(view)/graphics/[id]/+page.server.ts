@@ -1,5 +1,5 @@
-import type { PageServerLoad } from "../../$types"
-import { get_graphic_variables } from "../../../server/main"
+import { get_graphic_variables } from "../../../../server/main"
+import type { PageServerLoad } from "./$types"
 
 export const load: PageServerLoad = async ({ params }) => {
     return {

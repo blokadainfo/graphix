@@ -5,8 +5,7 @@
 
 	let View: Component | undefined = $state();
 	const { params, data }: PageProps = $props();
-	// svelte-ignore state_referenced_locally
-	const graphics_id = params.id;
+	const graphics_id = $derived(params.id);
 	onMount(async () => {
 		View = (await import(`$graphics/${graphics_id}/View.svelte`)).default;
 
@@ -20,5 +19,9 @@
 		});
 	});
 </script>
+
+<svelte:head>
+	<title>graphix - '{graphics_id}'</title>
+</svelte:head>
 
 <View />

@@ -1,64 +1,68 @@
 <script lang="ts">
+	import { Ellipsis} from '@lucide/svelte';
+	import { DropdownMenu, Separator } from 'bits-ui';
+	import { onMount } from 'svelte';
+	import DropdownItem from './DropdownItem.svelte';
 	import { resolve } from '$app/paths';
-	import open from '$lib/assets/icons/open.svg';
-	import { onMount, type Component } from 'svelte';
+	import BooleanVariableInput from './BooleanVariableInput.svelte';
+	import { isBooleanVariable, isLongTextVariable, isTextVariable, type GraphicInfo} from '$lib/shared/types';
+	import TextVariableInput from './TextVariableInput.svelte';
 	let { graphic } = $props();
 
-	let Panel: Component | undefined = $state();
+	let loaded = $state(false);
+	let info: GraphicInfo | undefined = $state();
 	onMount(async () => {
-		Panel = (await import(`$graphics/${graphic}/Panel.svelte`)).default;
+		info = (await import(`$graphics/${graphic}/graphix_info.json`));
+		loaded = true;
 	});
 </script>
 
 <div
-	class="h-fit rounded-md bg-black p-2 pt-4 outline-1"
-	style="outline-color: #ffffff15; filter: drop-shadow(0px 0px 6px #00000099);"
+	class="h-fit rounded-xl bg-element px-4 py-2 outline-2 outline-chrome"
 >
-	<div class="flex min-w-40 items-center gap-4 px-2">
+	<div class="flex min-w-80 items-center gap-8">
 		<div class="grow font-bold">
-			{graphic}
+			{#if loaded}
+				{info ? info.name : graphic}
+			{:else}
+				...
+			{/if}
 		</div>
 		<div class="grow-0">
-			<a href={resolve(`/graphics/${graphic}`)} title="Open graphic in a new tab" target="_blank">
-				<img src={open} class="h-8" alt="open" />
-			</a>
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger class="bg-control outline outline-chrome rounded-md p-1 hover:bg-control-hover cursor-pointer">
+					<Ellipsis size=24/>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Portal>
+					<DropdownMenu.Content class="bg-control w-fit p-1 mt-2 outline outline-chrome rounded-md">
+						<a href={resolve(`/graphics/${graphic}`)} title="View graphic in a new tab" target="_blank">
+							<DropdownItem>
+								View graphic
+							</DropdownItem>
+						</a>
+						<DropdownItem>
+							Copy graphic link
+						</DropdownItem>
+					</DropdownMenu.Content>
+				</DropdownMenu.Portal>
+			</DropdownMenu.Root>
 		</div>
 	</div>
-
-	{#if Panel}
-		<div class="mt-4 rounded-xs bg-neutral-900 p-3 outline-1" style="outline-color: #ffffff40;">
-			<Panel />
-		</div>
-	{/if}
+	<div>
+		{#each info?.variables as variable (variable.name)}
+			<Separator.Root class="border my-2 border-chrome"/>
+			{#if isLongTextVariable(variable) || isTextVariable(variable)}
+				<TextVariableInput variable={variable}/>
+			{:else if isBooleanVariable(variable)}
+				<BooleanVariableInput variable={variable}/>
+			{:else}
+				<p class="text-red-400 font-bold">
+					Please check your definition for variable '{variable.name}'.
+				</p>
+				<p class="text-red-300">
+					Unknown type '{variable.type}'.
+				</p>
+			{/if}
+		{/each}
+	</div>
 </div>
-
-<style>
-	:global(input),
-	:global(textarea),
-	:global(select) {
-		background-color: #333333;
-		border-radius: 8px;
-		padding: 4px;
-		min-height: 32px;
-	}
-
-	:global(button) {
-		background-color: rgb(15, 15, 15);
-		border-radius: 8px;
-		padding: 4px 12px;
-		outline: 1px solid #ffffff44;
-		cursor: pointer;
-		transition: 0.2s;
-	}
-
-	:global(button):hover {
-		background-color: #ffffff;
-		color: #000000;
-	}
-
-	:global(button):active {
-		background-color: #cacaca;
-		color: #000000;
-		padding: 3px 12px;
-	}
-</style>
