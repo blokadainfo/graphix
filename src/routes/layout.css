@@ -1,19 +1,19 @@
 @import 'tailwindcss';
-@import "@fontsource/inter";
+@import '@fontsource/inter';
 
 @theme {
-    --font-sans: Inter, sans-serif;
-    --color-canvas: #080808;
-    --color-chrome: #404040;
-    --color-element: #121212;
-    --color-control: #202020;
-    --color-control-hover: #2a2a2a;
-    --color-brand: #00764e;
-    --color-brand-2: #00d6a5;
+	--font-sans: Inter, sans-serif;
+	--color-canvas: #080808;
+	--color-chrome: #404040;
+	--color-element: #121212;
+	--color-control: #202020;
+	--color-control-hover: #2a2a2a;
+	--color-brand: #00764e;
+	--color-brand-2: #00d6a5;
 }
 
 body {
-    color: white;
-    background: var(--color-canvas);
-    min-height: 100vh;
+	color: white;
+	background: var(--color-canvas);
+	min-height: 100vh;
 }

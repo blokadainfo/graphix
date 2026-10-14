@@ -2,26 +2,26 @@
 	import { onMount, type Component } from 'svelte';
 	import type { PageProps } from './$types';
 	import { io } from 'socket.io-client';
+	import type { VariableUpdatedMessage } from '$lib/shared/types';
 
-	let View: Component | undefined = $state();
+	let View: Component<{ variables: unknown }> | undefined = $state();
 	const { params, data }: PageProps = $props();
-	const graphics_id = $derived(params.id);
+	const graphicID = $derived(params.id);
+	// svelte-ignore state_referenced_locally
+	let variables = $state(data.variables);
+
 	onMount(async () => {
-		View = (await import(`$graphics/${graphics_id}/View.svelte`)).default;
+		View = (await import(`$graphics/${graphicID}/View.svelte`)).default;
 
-		window.postMessage(data.variables);
-
-		const socket = io();
-
-		socket.on(`graphics_updated_${graphics_id}`, (message) => {
-			console.log(message);
-			window.postMessage(message);
+		const webSocketIO = io();
+		webSocketIO.on(`VariableUpdated_${graphicID}`, (message: VariableUpdatedMessage) => {
+			variables[message.variable] = message.value;
 		});
 	});
 </script>
 
 <svelte:head>
-	<title>graphix - '{graphics_id}'</title>
+	<title>graphix - '{graphicID}'</title>
 </svelte:head>
 
-<View />
+<View {variables} />
