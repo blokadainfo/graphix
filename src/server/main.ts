@@ -3,57 +3,48 @@ import { readdir } from 'fs/promises';
 import { JSONFilePreset } from 'lowdb/node';
 import { Server } from 'socket.io';
 import type { HttpServer, ViteDevServer } from 'vite';
+import { defaultData, defaultGraphicData, type Data } from './types';
+import type { UpdateGraphicMessage, VariableUpdatedMessage } from '$lib/shared/types';
 
-type UpdateGraphicMessage = {
-	graphic: string;
-	variables: GraphicVariables;
-};
+const db = await JSONFilePreset<Data>('graphix_db.json', defaultData);
 
-type GraphicVariables = {
-	[name: string]: unknown;
-};
-
-type GraphicData = {
-	variables: GraphicVariables;
-};
-
-type Data = {
-	graphics: {
-		[id: string]: GraphicData;
-	};
-};
-
-const default_data: Data = { graphics: {} };
-const db = await JSONFilePreset('graphix_db.json', default_data);
-const graphics_path = 'graphics';
-
-export async function get_graphics() {
+export async function getGraphics() {
 	await db.read();
 	return db.data.graphics;
 }
 
-export async function get_graphic_variables(id: string) {
+export async function getGraphicVariables(id: string) {
 	await db.read();
 	return db.data.graphics[id].variables;
 }
 
 export async function main(server: HttpServer) {
-	if (existsSync(graphics_path)) {
-		const dir = await readdir(graphics_path);
+	// Reset to default data if data version is lower
+	await db.read();
+	if (db.data.version < defaultData.version) {
+		db.data = defaultData;
+		await db.write();
+	}
 
-		for (const id of Object.keys(db.data.graphics)) {
+	const graphicsPath = 'graphics';
+	if (existsSync(graphicsPath)) {
+		// Clean up old graphic data
+		const dir = await readdir(graphicsPath);
+		const graphicIDs = Object.keys(db.data.graphics);
+		for (const id of graphicIDs) {
 			if (!dir.includes(id)) {
 				delete db.data.graphics[id];
 			}
 		}
 
-		dir.forEach((item_name) => {
-			const base_path = `${graphics_path}/${item_name}`;
+		dir.forEach((itemName) => {
+			const basePath = `${graphicsPath}/${itemName}`;
 			if (
-				!Object.hasOwn(db.data.graphics, item_name) &&
-				(existsSync(`${base_path}/View.svelte`) || existsSync(`${base_path}/Panel.svelte`))
+				!Object.hasOwn(db.data.graphics, itemName) &&
+				existsSync(`${basePath}/graphix_info.json`) &&
+				existsSync(`${basePath}/View.svelte`)
 			) {
-				db.data.graphics[item_name] = { variables: {} };
+				db.data.graphics[itemName] = structuredClone(defaultGraphicData);
 			}
 		});
 	} else {
@@ -61,20 +52,30 @@ export async function main(server: HttpServer) {
 	}
 	await db.write();
 
-	const io = new Server(server);
+	const webSocketIO = new Server(server);
+	webSocketIO.on('connection', async (socket) => {
+		socket.on('UpdateGraphic', async (receivedMsg: UpdateGraphicMessage) => {
+			console.log(receivedMsg);
+			const message: VariableUpdatedMessage = {
+				value: receivedMsg.value,
+				variable: receivedMsg.variable
+			};
+			webSocketIO.emit(`VariableUpdated_${receivedMsg.graphic}`, message);
 
-	io.on('connection', async (socket) => {
-		socket.on('update_graphic', async (message: UpdateGraphicMessage) => {
-			io.emit(`graphics_updated_${message.graphic}`, message.variables);
-			const preexisting_variables = db.data.graphics[message.graphic].variables;
-			db.data.graphics[message.graphic].variables = Object.assign({}, preexisting_variables, message.variables);
+			const currentVars = db.data.graphics[receivedMsg.graphic].variables;
+			const newVars = Object.assign({}, currentVars, { [receivedMsg.variable]: receivedMsg.value });
+			console.log(currentVars);
+			console.log(newVars);
+			db.data.graphics[receivedMsg.graphic].variables = newVars;
+			console.log(db.data.graphics['overlay']);
+			console.log(db.data.graphics['rezultati']);
 			await db.write();
 		});
 	});
 }
 
-export async function main_vite(dev_server: ViteDevServer) {
-	if (!dev_server.httpServer) return;
+export async function mainVite(devServer: ViteDevServer) {
+	if (!devServer.httpServer) return;
 
-	await main(dev_server.httpServer);
+	await main(devServer.httpServer);
 }
