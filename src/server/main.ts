@@ -55,7 +55,6 @@ export async function main(server: HttpServer) {
 	const webSocketIO = new Server(server);
 	webSocketIO.on('connection', async (socket) => {
 		socket.on('UpdateGraphic', async (receivedMsg: UpdateGraphicMessage) => {
-			console.log(receivedMsg);
 			const message: VariableUpdatedMessage = {
 				value: receivedMsg.value,
 				variable: receivedMsg.variable
@@ -64,11 +63,7 @@ export async function main(server: HttpServer) {
 
 			const currentVars = db.data.graphics[receivedMsg.graphic].variables;
 			const newVars = Object.assign({}, currentVars, { [receivedMsg.variable]: receivedMsg.value });
-			console.log(currentVars);
-			console.log(newVars);
 			db.data.graphics[receivedMsg.graphic].variables = newVars;
-			console.log(db.data.graphics['overlay']);
-			console.log(db.data.graphics['rezultati']);
 			await db.write();
 		});
 	});
