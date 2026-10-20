@@ -42,7 +42,7 @@ export async function main(server: HttpServer) {
 			if (
 				!Object.hasOwn(db.data.graphics, itemName) &&
 				existsSync(`${basePath}/graphix_info.json`) &&
-				existsSync(`${basePath}/View.svelte`)
+				existsSync(`${basePath}/views/View.svelte`)
 			) {
 				db.data.graphics[itemName] = structuredClone(defaultGraphicData);
 			}

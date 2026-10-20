@@ -11,7 +11,11 @@
 	let variables = $state(data.variables);
 
 	onMount(async () => {
-		View = (await import(`$graphics/${graphicID}/View.svelte`)).default;
+		let viewName = data.viewName;
+		if (viewName == null) {
+			viewName = 'View';
+		}
+		View = (await import(`$graphics/${graphicID}/views/${viewName}.svelte`)).default;
 
 		const webSocketIO = io();
 		webSocketIO.on(`VariableUpdated_${graphicID}`, (message: VariableUpdatedMessage) => {
