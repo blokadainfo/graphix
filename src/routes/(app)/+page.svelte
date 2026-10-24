@@ -4,6 +4,7 @@
 	import type { Graphics, UpdateGraphicMessage } from '$lib/shared/types.js';
 	import { getDefaultVariableValue, type VariableDefinition } from '$lib/shared/variables.js';
 	import { io } from 'socket.io-client';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 	let graphics: Graphics = $derived(data.graphics);
@@ -21,6 +22,7 @@
 		}
 	}
 
+	let armedMessages: UpdateGraphicMessage[] = $state([]);
 	function updateGraphicVariable<T>(graphic: string, variable: VariableDefinition, value: T) {
 		const message: UpdateGraphicMessage = {
 			graphic,
@@ -28,17 +30,49 @@
 			value
 		};
 
-		webSocketIO.emit('UpdateGraphic', message);
+		if (arming) {
+			armedMessages.push(message);
+		} else {
+			webSocketIO.emit('UpdateGraphic', message);
+		}
 	}
+
+	webSocketIO.on(`FireArmed`, () => {
+		armedMessages.forEach((message) => webSocketIO.emit('UpdateGraphic', message));
+		armedMessages = [];
+	});
+
+	let arming = $state(false);
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.code === 'ShiftLeft') {
+			arming = !arming;
+		}
+	}
+
+	onMount(() => {
+		window.addEventListener('keydown', handleKeyDown);
+	});
 </script>
 
 <title>graphix - Dashboard</title>
 
 <div class="h-fill flex flex-col">
 	<div
-		class="sticky top-0 z-10 h-16 shrink-0 grow-0 content-center bg-black px-4 py-2 outline outline-chrome"
+		class="sticky top-0 z-10 flex h-16 shrink-0 grow-0 content-center items-center bg-black px-4 py-2 outline outline-chrome"
 	>
 		<img class="h-full" src={logo} alt="graphix" />
+		<div class="flex grow justify-end gap-2">
+			{#if armedMessages.length > 0}
+				<div class="rounded-md bg-amber-600 p-3 outline-2 outline-amber-700">
+					Armed changes, waiting for fire...
+				</div>
+			{/if}
+			{#if arming}
+				<div class="rounded-md bg-red-600 p-3 outline-2 outline-red-700">
+					Arming all variable changes, press Left Shift to disable
+				</div>
+			{/if}
+		</div>
 	</div>
 	{#if Object.keys(graphics).length > 0}
 		<div class="flex grow flex-wrap gap-6 overflow-hidden p-4">

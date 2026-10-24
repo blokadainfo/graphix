@@ -53,6 +53,7 @@ export async function main(server: HttpServer) {
 	await db.write();
 
 	const webSocketIO = new Server(server);
+	globalThis.WebSocketIO = webSocketIO;
 	webSocketIO.on('connection', async (socket) => {
 		socket.on('UpdateGraphic', async (receivedMsg: UpdateGraphicMessage) => {
 			const message: VariableUpdatedMessage = {
