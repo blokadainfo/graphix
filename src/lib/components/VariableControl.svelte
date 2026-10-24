@@ -2,11 +2,13 @@
 	import {
 		isBooleanVariable,
 		isLongTextVariable,
+		isNumberVariable,
 		isTableMetaVariable,
 		isTextVariable,
 		type VariableDefinition
 	} from '$lib/shared/variables';
 	import BooleanVariableInput from './BooleanVariableInput.svelte';
+	import NumberVariableInput from './NumberVariableInput.svelte';
 	import TableMetaVariableInput from './TableMetaVariableInput.svelte';
 	import TextVariableInput from './TextVariableInput.svelte';
 
@@ -29,6 +31,8 @@
 	<BooleanVariableInput {variable} {onchange} {getvalue} {inTable} />
 {:else if isTableMetaVariable(variable)}
 	<TableMetaVariableInput {variable} {onchange} {getvalue} />
+{:else if isNumberVariable(variable)}
+	<NumberVariableInput {variable} {onchange} {getvalue} {inTable} />
 {:else}
 	<p class="font-bold text-red-400">
 		Please check your definition for variable '{variable.name}'.
