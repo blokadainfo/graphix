@@ -4,23 +4,17 @@
 	import { onMount } from 'svelte';
 	import DropdownItem from './DropdownItem.svelte';
 	import { resolve } from '$app/paths';
-	import BooleanVariableInput from './BooleanVariableInput.svelte';
-	import {
-		isBooleanVariable,
-		isLongTextVariable,
-		isTextVariable,
-		type GraphicInfo,
-		type VariableDefinition
-	} from '$lib/shared/types';
-	import TextVariableInput from './TextVariableInput.svelte';
+	import { type GraphicInfo } from '$lib/shared/types';
+	import VariableControl from './VariableControl.svelte';
+	import type { VariableDefinition } from '$lib/shared/variables';
 	let {
 		graphic,
 		onvariablechange,
 		getvariablevalue
 	}: {
 		graphic: string;
-		onvariablechange: (variable: VariableDefinition, value: unknown) => void;
-		getvariablevalue: (variable: VariableDefinition, defaultValue: unknown) => unknown;
+		onvariablechange: <T>(variable: VariableDefinition, value: T) => void;
+		getvariablevalue: <T>(variable: VariableDefinition) => T;
 	} = $props();
 
 	let loaded = $state(false);
@@ -70,26 +64,11 @@
 	<div>
 		{#each info?.variables as variable (variable.name)}
 			<Separator.Root class="my-2 border border-chrome" />
-			{#if isLongTextVariable(variable) || isTextVariable(variable)}
-				<TextVariableInput
-					{variable}
-					onchange={(value) => onvariablechange(variable, value)}
-					getvalue={(defaultValue) => getvariablevalue(variable, defaultValue)}
-				/>
-			{:else if isBooleanVariable(variable)}
-				<BooleanVariableInput
-					{variable}
-					onchange={(value) => onvariablechange(variable, value)}
-					getvalue={(defaultValue) => getvariablevalue(variable, defaultValue)}
-				/>
-			{:else}
-				<p class="font-bold text-red-400">
-					Please check your definition for variable '{variable.name}'.
-				</p>
-				<p class="text-red-300">
-					Unknown type '{variable.type}'.
-				</p>
-			{/if}
+			<VariableControl
+				{variable}
+				onchange={(value) => onvariablechange(variable, value)}
+				getvalue={() => getvariablevalue(variable)}
+			/>
 		{/each}
 	</div>
 </div>
