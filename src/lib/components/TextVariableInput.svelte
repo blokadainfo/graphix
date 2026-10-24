@@ -1,20 +1,22 @@
 <script lang="ts">
-	import type { TextVariableDefinition } from '$lib/shared/types';
 	import { Save, Trash } from '@lucide/svelte';
 	import Button from './Button.svelte';
+	import { getDefaultVariableValue, type TextVariableDefinition } from '$lib/shared/variables';
 
 	let {
 		variable,
 		onchange,
-		getvalue
+		getvalue,
+		inTable
 	}: {
 		variable: TextVariableDefinition;
 		onchange: (value: string) => void;
-		getvalue: (defaultValue: string) => unknown;
+		getvalue: () => string;
+		inTable?: boolean;
 	} = $props();
 
-	let defaultValue = $derived(variable.default_value || '');
-	let value = $derived(String(getvalue(defaultValue)));
+	// svelte-ignore state_referenced_locally
+	let value = $state(getvalue());
 	let options: string[] = $state([]);
 
 	function onApply() {
@@ -22,7 +24,7 @@
 	}
 
 	function onApplyDefault() {
-		value = variable.default_value || '';
+		value = getDefaultVariableValue(variable);
 		onApply();
 	}
 
@@ -39,12 +41,20 @@
 	function onDeleteOption(index: number) {
 		options.splice(index, 1);
 	}
+
+	function onTextChange() {
+		if (inTable) {
+			onchange(value);
+		}
+	}
 </script>
 
 <div class="mb-2 flex flex-col gap-2">
-	<span class="text-sm">
-		{variable.display_name}
-	</span>
+	{#if !inTable}
+		<span class="text-sm">
+			{variable.display_name}
+		</span>
+	{/if}
 	{#each options.entries() as [i, option] (i)}
 		<div
 			class="flex h-10 items-center justify-between gap-2 rounded-md border border-chrome bg-control p-2 pl-0"
@@ -69,26 +79,33 @@
 		<textarea
 			class="min-h-10 rounded-md border border-chrome bg-control p-2"
 			placeholder={variable.placeholder}
+			oninput={onTextChange}
 			bind:value
 		></textarea>
 	{:else}
 		<input
 			class="min-h-10 rounded-md border border-chrome bg-control p-2"
 			placeholder={variable.placeholder}
+			oninput={onTextChange}
 			bind:value
 		/>
 	{/if}
 
-	<div class="flex gap-2">
-		<Button classes="grow" onclick={() => onApply()}>Apply</Button>
-		{#if variable.default_value}
-			<Button classes="grow" onclick={() => onApplyDefault()}>Apply default</Button>
-		{/if}
-		{#if variable.can_save_options}
-			<Button classes="grow flex justify-center items-center gap-1" onclick={() => onSaveOption()}>
-				<Save size="20" />
-				Save option
-			</Button>
-		{/if}
-	</div>
+	{#if !inTable}
+		<div class="flex gap-2">
+			<Button classes="grow" onclick={() => onApply()}>Apply</Button>
+			{#if variable.default_value}
+				<Button classes="grow" onclick={() => onApplyDefault()}>Apply default</Button>
+			{/if}
+			{#if variable.can_save_options}
+				<Button
+					classes="grow flex justify-center items-center gap-1"
+					onclick={() => onSaveOption()}
+				>
+					<Save size="20" />
+					Save option
+				</Button>
+			{/if}
+		</div>
+	{/if}
 </div>

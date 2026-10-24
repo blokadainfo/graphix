@@ -1,19 +1,21 @@
 <script lang="ts">
+	import type { BooleanVariableDefinition } from '$lib/shared/variables';
 	import { Switch } from 'bits-ui';
-	import type { BooleanVariableDefinition } from '$lib/shared/types';
 
 	let {
 		variable,
 		onchange,
-		getvalue
+		getvalue,
+		inTable
 	}: {
 		variable: BooleanVariableDefinition;
 		onchange: (value: boolean) => void;
-		getvalue: (defaultValue: boolean) => unknown;
+		getvalue: () => boolean;
+		inTable?: boolean;
 	} = $props();
 
-	let defaultValue = $derived(variable.default_value || false);
-	let value = $derived(Boolean(getvalue(defaultValue)));
+	// svelte-ignore state_referenced_locally
+	let value = $state(getvalue());
 </script>
 
 <div class="mb-2 flex items-center gap-2">
@@ -26,7 +28,9 @@
 			class="block h-6 w-8 rounded-full bg-white transition-transform data-[state=checked]:translate-x-8 data-[state=unchecked]:translate-x-0"
 		/>
 	</Switch.Root>
-	<span class="text-md">
-		{variable.display_name}
-	</span>
+	{#if !inTable}
+		<span class="text-md">
+			{variable.display_name}
+		</span>
+	{/if}
 </div>

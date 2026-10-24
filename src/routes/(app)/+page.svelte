@@ -1,21 +1,19 @@
 <script lang="ts">
 	import logo from '$lib/assets/graphix.svg';
 	import PanelHolder from '$lib/components/PanelHolder.svelte';
-	import type { Graphics, UpdateGraphicMessage, VariableDefinition } from '$lib/shared/types.js';
+	import type { Graphics, UpdateGraphicMessage } from '$lib/shared/types.js';
+	import { getDefaultVariableValue, type VariableDefinition } from '$lib/shared/variables.js';
 	import { io } from 'socket.io-client';
 
 	let { data } = $props();
 	let graphics: Graphics = $derived(data.graphics);
 	const webSocketIO = io();
 
-	function getVariableValue(
-		graphic: string,
-		variable: VariableDefinition,
-		defaultValue: unknown
-	): unknown {
+	function getVariableValue<T>(graphic: string, variable: VariableDefinition): T {
 		const variableName = variable.name;
 		const currentValue = graphics[graphic].variables[variableName];
 		if (currentValue == undefined) {
+			const defaultValue = getDefaultVariableValue<T>(variable);
 			updateGraphicVariable(graphic, variable, defaultValue);
 			return defaultValue;
 		} else {
@@ -23,7 +21,7 @@
 		}
 	}
 
-	function updateGraphicVariable(graphic: string, variable: VariableDefinition, value: unknown) {
+	function updateGraphicVariable<T>(graphic: string, variable: VariableDefinition, value: T) {
 		const message: UpdateGraphicMessage = {
 			graphic,
 			variable: variable.name,
@@ -47,8 +45,7 @@
 			{#each Object.keys(graphics) as graphic_name (graphic_name)}
 				<PanelHolder
 					graphic={graphic_name}
-					getvariablevalue={(variable, defaultValue) =>
-						getVariableValue(graphic_name, variable, defaultValue)}
+					getvariablevalue={(variable) => getVariableValue(graphic_name, variable)}
 					onvariablechange={(variable, value) =>
 						updateGraphicVariable(graphic_name, variable, value)}
 				/>
